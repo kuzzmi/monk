@@ -15,5 +15,11 @@
   "bugs": {
     "url": "https://github.com/kuzzmi/monk/issues"
   },
-  "homepage": "https://github.com/kuzzmi/monk"
+  "homepage": "https://github.com/kuzzmi/monk",
+  "dependencies": {
+    "grunt": "^0.4.5"
+  },
+  "devDependencies": {
+    "grunt-typescript": "^0.8.0"
+  }
 }
