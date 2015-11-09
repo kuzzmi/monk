@@ -54,13 +54,8 @@ func (fp *FilePanel) Redraw() {
 }
 
 func (fp *FilePanel) Select(index int) {
-	fp.Panel.Window().Erase()
-	fp.Panel.Window().NoutRefresh()
-
 	fp.Selected = index
-	fp.Draw()
-
-	gc.Update()
+	fp.Redraw()
 }
 
 func (fp *FilePanel) GoUp() {
@@ -71,6 +66,9 @@ func (fp *FilePanel) GoUp() {
 func (fp *FilePanel) ToggleActivity() {
 	fp.IsActive = !fp.IsActive
 	fp.Redraw()
+}
+
+func TogglePannels(panels [2]FilePanel, activePanel int) {
 }
 
 func main() {
@@ -112,7 +110,13 @@ main:
 		case gc.KEY_TAB:
 			panels[0].ToggleActivity()
 			panels[1].ToggleActivity()
-			activePanel = 1
+			gc.UpdatePanels()
+			gc.Update()
+			if activePanel == 0 {
+				activePanel = 1
+			} else {
+				activePanel = 0
+			}
 		case 'k':
 			panels[activePanel].Select(panels[activePanel].Selected - 1)
 		case 'j':
