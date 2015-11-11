@@ -1,16 +1,31 @@
-package main
+package monk
 
 import (
 	gc "github.com/rthornton128/goncurses"
 	"io/ioutil"
 	"log"
+	"strings"
 )
+
+import "monk/filepanel"
+
+/*
+FilePanel:
+
+Init(cwd string)
+Draw()
+Redraw()
+Select(index int)
+Execute()
+ChangeDirectory(to string)
+*/
 
 type FilePanel struct {
 	Height, Width, X, Y int
 	Directory           string
 	IsActive            bool
 	Selected            int
+	Files               []string
 
 	Panel *gc.Panel
 }
@@ -37,19 +52,17 @@ func (fp *FilePanel) Draw() {
 	}
 
 	if fp.IsActive {
-		var msg = " [ Active ] "
+		var msg = " [ " + fp.Directory + " ] "
+		window.AttrOn(gc.A_BOLD)
 		window.MovePrint(0, (fp.Width-len(msg))/2, msg)
+		window.AttrOff(gc.A_BOLD)
 	}
 
 	fp.Panel = gc.NewPanel(window)
 }
 
 func (fp *FilePanel) Redraw() {
-	fp.Panel.Window().Erase()
-	fp.Panel.Window().NoutRefresh()
-
 	fp.Draw()
-
 	gc.Update()
 }
 
@@ -59,7 +72,8 @@ func (fp *FilePanel) Select(index int) {
 }
 
 func (fp *FilePanel) GoUp() {
-	fp.Directory = fp.Directory + "../"
+	var folders = strings.Split(fp.Directory, "/")
+	fp.Directory = strings.Join(folders[:len(folders)-2], "/") + "/"
 	fp.Select(0)
 }
 
