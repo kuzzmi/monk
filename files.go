@@ -1,89 +1,10 @@
-package monk
+package main
 
 import (
+	fp "github.com/kuzzmi/monk/filepanel"
 	gc "github.com/rthornton128/goncurses"
-	"io/ioutil"
 	"log"
-	"strings"
 )
-
-import "monk/filepanel"
-
-/*
-FilePanel:
-
-Init(cwd string)
-Draw()
-Redraw()
-Select(index int)
-Execute()
-ChangeDirectory(to string)
-*/
-
-type FilePanel struct {
-	Height, Width, X, Y int
-	Directory           string
-	IsActive            bool
-	Selected            int
-	Files               []string
-
-	Panel *gc.Panel
-}
-
-func PrintHiglighted(window *gc.Window, y int, x int, index int, selected int, text string) {
-	if index == selected {
-		window.AttrOn(gc.A_STANDOUT)
-	}
-	window.MovePrint(y, x, text)
-	if index == selected {
-		window.AttrOff(gc.A_STANDOUT)
-	}
-}
-
-func (fp *FilePanel) Draw() {
-	window, _ := gc.NewWindow(fp.Height, fp.Width, fp.Y, fp.X)
-	window.Box(0, 0)
-
-	files, _ := ioutil.ReadDir(fp.Directory)
-
-	PrintHiglighted(window, 1, 1, 0, fp.Selected, "..")
-	for i, f := range files {
-		PrintHiglighted(window, i+2, 1, i, fp.Selected-1, f.Name())
-	}
-
-	if fp.IsActive {
-		var msg = " [ " + fp.Directory + " ] "
-		window.AttrOn(gc.A_BOLD)
-		window.MovePrint(0, (fp.Width-len(msg))/2, msg)
-		window.AttrOff(gc.A_BOLD)
-	}
-
-	fp.Panel = gc.NewPanel(window)
-}
-
-func (fp *FilePanel) Redraw() {
-	fp.Draw()
-	gc.Update()
-}
-
-func (fp *FilePanel) Select(index int) {
-	fp.Selected = index
-	fp.Redraw()
-}
-
-func (fp *FilePanel) GoUp() {
-	var folders = strings.Split(fp.Directory, "/")
-	fp.Directory = strings.Join(folders[:len(folders)-2], "/") + "/"
-	fp.Select(0)
-}
-
-func (fp *FilePanel) ToggleActivity() {
-	fp.IsActive = !fp.IsActive
-	fp.Redraw()
-}
-
-func TogglePannels(panels [2]FilePanel, activePanel int) {
-}
 
 func main() {
 	stdscr, err := gc.Init()
@@ -96,14 +17,14 @@ func main() {
 	gc.CBreak(true)
 	gc.Cursor(0)
 
-	var panels [2]FilePanel
+	var panels [2]fp.FilePanel
 	rows, cols := stdscr.MaxYX()
 	height, width := rows, cols/2
 	y, x := 0, 0
 	activePanel := 0
 
-	panels[0] = FilePanel{Height: height, Width: width, Y: y, X: x, Directory: "./", Selected: 0, IsActive: true}
-	panels[1] = FilePanel{Height: height, Width: width, Y: y, X: x + width, Directory: "/home/kuzzmi/", Selected: 2, IsActive: false}
+	panels[0] = fp.FilePanel{Height: height, Width: width, Y: y, X: x, Directory: "./", Selected: 0, IsActive: true}
+	panels[1] = fp.FilePanel{Height: height, Width: width, Y: y, X: x + width, Directory: "/home/kuzzmi/", Selected: 2, IsActive: false}
 
 	panels[0].Draw()
 	panels[1].Draw()
@@ -120,7 +41,7 @@ main:
 		case 'q':
 			break main
 		case gc.KEY_RETURN:
-			panels[activePanel].GoUp()
+			panels[activePanel].Execute()
 		case gc.KEY_TAB:
 			panels[0].ToggleActivity()
 			panels[1].ToggleActivity()
@@ -131,10 +52,14 @@ main:
 			} else {
 				activePanel = 0
 			}
+		case 'u':
+			panels[activePanel].GoUp()
 		case 'k':
 			panels[activePanel].Select(panels[activePanel].Selected - 1)
 		case 'j':
 			panels[activePanel].Select(panels[activePanel].Selected + 1)
+		case 'i':
+			panels[activePanel].HideHidden()
 		}
 	}
 	stdscr.Delete()
